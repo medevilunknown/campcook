@@ -1,0 +1,176 @@
+{
+  "app_name": "CampCook",
+  "personality": "3 Editorial Mobile LIGHT (with botanical green infusion)",
+  "personality_one_liner": "An editorial campus dining experience marrying white paper canvases, botanical green warmth, and effortless ordering.",
+  "color": {
+    "surface": "#FAF9F6",
+    "onSurface": "#1A2E22",
+    "surfaceSecondary": "#F0EFEA",
+    "onSurfaceSecondary": "#2C4435",
+    "surfaceTertiary": "#E5E3DB",
+    "onSurfaceTertiary": "#3D5E4A",
+    "surfaceInverse": "#111C16",
+    "onSurfaceInverse": "#F7F6F2",
+    "brand": "#2E6F40",
+    "brandPrimary": "#2E6F40",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#3B8C53",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#E2EFE6",
+    "onBrandTertiary": "#1F4A2B",
+    "success": "#2E6F40",
+    "onSuccess": "#FFFFFF",
+    "warning": "#C98A2E",
+    "onWarning": "#FFFFFF",
+    "error": "#B83A3A",
+    "onError": "#FFFFFF",
+    "info": "#2E5A88",
+    "onInfo": "#FFFFFF",
+    "border": "#E2E0D8",
+    "borderStrong": "#C8C4B7",
+    "divider": "#EBE8E0",
+    "muted": "#5C7367",
+    "onBrand": "#FFFFFF"
+  },
+  "typography": {
+    "displayFontFamily": "PlayfairDisplay",
+    "textFontFamily": "PlusJakartaSans",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous magazine-like vertical spacing with tactile padding and clean hierarchy",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Use frosted glass header and bottom bar over scrolling content",
+      "Apply translucent tinted base for botanical warmth"
+    ],
+    "dont's": [
+      "Never blur form inputs or body text regions"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Welcome / Auth",
+      "purpose": "Immersive campus welcome with student/staff ID login, email toggle, and Google sign-in.",
+      "states": {
+        "loading": "Centered botanical spinner with subtle greeting fade",
+        "empty": "N/A",
+        "error": "Banner with readable authentication message and retry CTA"
+      },
+      "layout": "Full-bleed botanical background photo with 3-stop vertical gradient scrim. Centered typography greeting 'Good Food, Brighter Days', segmented role toggle (Student / Staff), ID/Email input fields, Google Auth button, and sticky bottom action."
+    },
+    {
+      "name": "Home / Browse Menu",
+      "purpose": "Discover fresh daily campus menus, category filters, and featured meals.",
+      "states": {
+        "loading": "Skeleton card placeholders with shimmer effect",
+        "empty": "Botanical illustration + 'No dishes found in this category' + Reset filter CTA",
+        "error": "Readable network error message + Refresh feed button"
+      },
+      "layout": "Sticky frosted glass header with search bar and student badge. Horizontal category pills filter row. Featured hero card with gradient scrim and quick add button. Single-column vertical card feed for daily specials with real food imagery and price tags."
+    },
+    {
+      "name": "Item Details",
+      "purpose": "Customize menu items with portion sizes, dietary add-ons, and special instructions.",
+      "states": {
+        "loading": "Image placeholder loader + skeleton ingredient list",
+        "empty": "N/A",
+        "error": "Failed to load item details + Retry button"
+      },
+      "layout": "Full-width header image with gradient scrim and floating back button. Scrollable content with Playfair display title, calorie & nutrition badges, radio selector for size/portions, checkbox add-ons list, special instruction text input, and sticky bottom Add to Cart bar."
+    },
+    {
+      "name": "Cart",
+      "purpose": "Review selected meals, apply dining points/promos, and proceed to checkout.",
+      "states": {
+        "loading": "Centered loader",
+        "empty": "Fresh salad bowl illustration + 'Your tray is empty' + Browse Menu CTA",
+        "error": "Error updating cart + Refresh action"
+      },
+      "layout": "Scrollable list of cart items with quantity steppers and remove actions. Student ID charging info summary, promo code input, order subtotal breakdown, and sticky bottom Proceed to Checkout button."
+    },
+    {
+      "name": "Checkout & Payment",
+      "purpose": "Select dining hall pickup/delivery slot and complete secure payment.",
+      "states": {
+        "loading": "Processing checkout spinner",
+        "empty": "N/A",
+        "error": "Payment failure alert + Try alternative payment method CTA"
+      },
+      "layout": "Step progression indicator. Pickup location selector (Student Union, Science Hall, Library Café). Payment method selector (Campus Meal Plan, Google Pay, Credit/Debit card). Order summary card and sticky bottom 'Pay & Place Order' CTA."
+    },
+    {
+      "name": "Order Tracking",
+      "purpose": "Real-time kitchen prep and campus delivery/pickup status tracking.",
+      "states": {
+        "loading": "Loading kitchen order status",
+        "empty": "No active orders found + Order now CTA",
+        "error": "Failed to sync order status + Reconnect button"
+      },
+      "layout": "Interactive status timeline (Order Placed -> Kitchen Prep -> Ready for Pickup / En Route -> Delivered). Live countdown timer card, order item summary list, and action buttons for support or reordering."
+    },
+    {
+      "name": "Profile & Account",
+      "purpose": "Manage student/staff credentials, meal plan balances, and order history.",
+      "states": {
+        "loading": "Profile skeleton loader",
+        "empty": "No past orders + Start ordering CTA",
+        "error": "Failed to load profile data + Retry"
+      },
+      "layout": "Header card with user avatar, name, campus role badge, and meal balance counter. Settings and preference list rows with tinted icon containers. Order history summary list and secure Sign Out action."
+    }
+  ],
+  "images": {
+    "welcome_bg": {
+      "url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=85&w=1000",
+      "dark": "https://images.unsplash.com/photo-1607532941433-304659e8198a?auto=format&fit=crop&q=85&w=1000",
+      "alt": "Fresh organic salad bowl on wooden table"
+    },
+    "hero_banner": {
+      "url": "https://images.unsplash.com/photo-1551888645-5ec881101c3f?auto=format&fit=crop&q=85&w=1000",
+      "dark": "https://images.unsplash.com/photo-16327121-6327121?auto=format&fit=crop&q=85&w=1000",
+      "alt": "Organic avocado toast and fresh herbs"
+    },
+    "smoothie_bowl": {
+      "url": "https://images.unsplash.com/photo-1534352436920-f658b50b73fe?auto=format&fit=crop&q=85&w=800",
+      "alt": "Healthy green smoothie bowl"
+    }
+  },
+  "instructions_to_main_agent": "Ensure all screens strictly adhere to the Editorial Mobile LIGHT personality with botanical green accents (#2E6F40) and paper-white canvas (#FAF9F6). Apply gradient scrims over all images with text overlays. Implement sticky primary CTAs on all transactional screens. Use real logo PNGs or high-quality image selector URLs for all food items and user avatars. Avoid indigo/purple/blue entirely."
+}
