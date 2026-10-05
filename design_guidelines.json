@@ -1,40 +1,40 @@
 {
-  "app_name": "CampCook",
-  "personality": "3 Editorial Mobile LIGHT (with botanical green infusion)",
-  "personality_one_liner": "An editorial campus dining experience marrying white paper canvases, botanical green warmth, and effortless ordering.",
+  "app_name": "CampCook Caterer Workspace",
+  "personality": "3 Editorial Mobile LIGHT (with Dark-First Utility operational cues)",
+  "personality_one_liner": "Operational kitchen clarity meets botanical warmth — a scan-friendly caterer workspace built for live queues, offline billing, and menu control.",
   "color": {
-    "surface": "#FAF9F6",
+    "surface": "#F4F6F2",
     "onSurface": "#1A2E22",
-    "surfaceSecondary": "#F0EFEA",
-    "onSurfaceSecondary": "#2C4435",
-    "surfaceTertiary": "#E5E3DB",
-    "onSurfaceTertiary": "#3D5E4A",
-    "surfaceInverse": "#111C16",
-    "onSurfaceInverse": "#F7F6F2",
-    "brand": "#2E6F40",
-    "brandPrimary": "#2E6F40",
+    "surfaceSecondary": "#E5EBE1",
+    "onSurfaceSecondary": "#2D4A38",
+    "surfaceTertiary": "#D6E0D0",
+    "onSurfaceTertiary": "#3B5C47",
+    "surfaceInverse": "#112218",
+    "onSurfaceInverse": "#F4F6F2",
+    "brand": "#2E5C3E",
+    "brandPrimary": "#2E5C3E",
     "onBrandPrimary": "#FFFFFF",
-    "brandSecondary": "#3B8C53",
+    "brandSecondary": "#4B7A5D",
     "onBrandSecondary": "#FFFFFF",
-    "brandTertiary": "#E2EFE6",
-    "onBrandTertiary": "#1F4A2B",
-    "success": "#2E6F40",
+    "brandTertiary": "#C2D4C6",
+    "onBrandTertiary": "#1A2E22",
+    "success": "#366B4A",
     "onSuccess": "#FFFFFF",
-    "warning": "#C98A2E",
+    "warning": "#B8860B",
     "onWarning": "#FFFFFF",
-    "error": "#B83A3A",
+    "error": "#A33B2B",
     "onError": "#FFFFFF",
-    "info": "#2E5A88",
+    "info": "#3B6978",
     "onInfo": "#FFFFFF",
-    "border": "#E2E0D8",
-    "borderStrong": "#C8C4B7",
-    "divider": "#EBE8E0",
-    "muted": "#5C7367",
+    "border": "#D2DEC9",
+    "borderStrong": "#2E5C3E",
+    "divider": "#E2EADE",
+    "muted": "#5A7363",
     "onBrand": "#FFFFFF"
   },
   "typography": {
-    "displayFontFamily": "PlayfairDisplay",
-    "textFontFamily": "PlusJakartaSans",
+    "displayFontFamily": "PlayfairDisplay_400Regular",
+    "textFontFamily": "PlusJakartaSans_400Regular",
     "scale": {
       "sm": 12,
       "base": 14,
@@ -44,7 +44,7 @@
     }
   },
   "spacing": {
-    "rule": "Generous magazine-like vertical spacing with tactile padding and clean hierarchy",
+    "rule": "Generous editorial vertical rhythm combined with compact operational padding for kitchen queues and order cards.",
     "xs": 4,
     "sm": 8,
     "md": 12,
@@ -61,15 +61,16 @@
   },
   "shadow_tier": "1",
   "navigation": "bottom_tabs",
-  "icon_set": "Phosphor",
+  "icon_set": "Ionicons",
   "glassmorphism": {
     "enabled": true,
     "do's": [
-      "Use frosted glass header and bottom bar over scrolling content",
-      "Apply translucent tinted base for botanical warmth"
+      "Use translucent frosted glass for sticky queue filters and bottom tab bar over scrolling lists",
+      "Apply 75% surface tint underneath blur for strict kitchen readability"
     ],
     "dont's": [
-      "Never blur form inputs or body text regions"
+      "Never blur form fields or menu management inputs",
+      "Do not use heavy blur on live order status badges"
     ]
   },
   "platform_libraries": {
@@ -86,91 +87,92 @@
   },
   "screens": [
     {
-      "name": "Welcome / Auth",
-      "purpose": "Immersive campus welcome with student/staff ID login, email toggle, and Google sign-in.",
+      "name": "CatererLogin",
+      "purpose": "Secure staff entry with Staff ID/Email and role selection.",
       "states": {
-        "loading": "Centered botanical spinner with subtle greeting fade",
-        "empty": "N/A",
-        "error": "Banner with readable authentication message and retry CTA"
+        "loading": "Authenticating kitchen credentials...",
+        "empty": "Please enter valid staff credentials to access kitchen workspace.",
+        "error": "Invalid Staff ID or network failure. Please retry."
       },
-      "layout": "Full-bleed botanical background photo with 3-stop vertical gradient scrim. Centered typography greeting 'Good Food, Brighter Days', segmented role toggle (Student / Staff), ID/Email input fields, Google Auth button, and sticky bottom action."
+      "layout": "Clean editorial card centered on botanical background with secure input fields, role picker, and sticky login CTA."
     },
     {
-      "name": "Home / Browse Menu",
-      "purpose": "Discover fresh daily campus menus, category filters, and featured meals.",
+      "name": "CatererDashboard",
+      "purpose": "Operational command center showing live kitchen metrics, daily earnings, and quick queue summary.",
       "states": {
-        "loading": "Skeleton card placeholders with shimmer effect",
-        "empty": "Botanical illustration + 'No dishes found in this category' + Reset filter CTA",
-        "error": "Readable network error message + Refresh feed button"
+        "loading": "Syncing kitchen orders and offline DB...",
+        "empty": "No orders for today yet. Tap '+' to create a manual offline order.",
+        "error": "Failed to sync orders. Working in offline database mode."
       },
-      "layout": "Sticky frosted glass header with search bar and student badge. Horizontal category pills filter row. Featured hero card with gradient scrim and quick add button. Single-column vertical card feed for daily specials with real food imagery and price tags."
+      "layout": "Header with caterer profile status, earnings hero card with quick stats, today's queue preview shelf, and offline sync indicator."
     },
     {
-      "name": "Item Details",
-      "purpose": "Customize menu items with portion sizes, dietary add-ons, and special instructions.",
+      "name": "OrderQueue",
+      "purpose": "Live kitchen order queue with filter tabs (All, New, Prep, Ready, Done) and 1-tap state transitions.",
       "states": {
-        "loading": "Image placeholder loader + skeleton ingredient list",
-        "empty": "N/A",
-        "error": "Failed to load item details + Retry button"
+        "loading": "Loading live order queue...",
+        "empty": "Queue is clear! All active orders have been completed.",
+        "error": "Could not load order queue. Tap to retry."
       },
-      "layout": "Full-width header image with gradient scrim and floating back button. Scrollable content with Playfair display title, calorie & nutrition badges, radio selector for size/portions, checkbox add-ons list, special instruction text input, and sticky bottom Add to Cart bar."
+      "layout": "Sticky glass filter row at top followed by vertical list of high-contrast order cards with instant action buttons (Accept, Prepare, Ready, Complete)."
     },
     {
-      "name": "Cart",
-      "purpose": "Review selected meals, apply dining points/promos, and proceed to checkout.",
+      "name": "OrderDetail",
+      "purpose": "Deep dive into a specific order showing items, modifiers, customer notes, pickup time, payment status, and direct customer phone contact.",
       "states": {
-        "loading": "Centered loader",
-        "empty": "Fresh salad bowl illustration + 'Your tray is empty' + Browse Menu CTA",
-        "error": "Error updating cart + Refresh action"
+        "loading": "Fetching order details...",
+        "empty": "Order details not found.",
+        "error": "Failed to load order information."
       },
-      "layout": "Scrollable list of cart items with quantity steppers and remove actions. Student ID charging info summary, promo code input, order subtotal breakdown, and sticky bottom Proceed to Checkout button."
+      "layout": "Modal/Stack screen with customer contact header, ordered items breakdown with pricing, customer notes callout box, and bottom sticky status progression bar."
     },
     {
-      "name": "Checkout & Payment",
-      "purpose": "Select dining hall pickup/delivery slot and complete secure payment.",
+      "name": "MenuManagement",
+      "purpose": "Catalog manager for catering dishes with real-time price updates and instant availability toggles.",
       "states": {
-        "loading": "Processing checkout spinner",
-        "empty": "N/A",
-        "error": "Payment failure alert + Try alternative payment method CTA"
+        "loading": "Loading menu catalog...",
+        "empty": "No catering items found. Add your first dish below.",
+        "error": "Failed to sync menu updates with server."
       },
-      "layout": "Step progression indicator. Pickup location selector (Student Union, Science Hall, Library Café). Payment method selector (Campus Meal Plan, Google Pay, Credit/Debit card). Order summary card and sticky bottom 'Pay & Place Order' CTA."
+      "layout": "Search & category filter bar, item cards with price badges, stock availability switches, and floating 'Add New Dish' action button."
     },
     {
-      "name": "Order Tracking",
-      "purpose": "Real-time kitchen prep and campus delivery/pickup status tracking.",
+      "name": "ManualOrderModal",
+      "purpose": "Offline billing and manual order creation tool storing orders directly in the local SQLite/backend database.",
       "states": {
-        "loading": "Loading kitchen order status",
-        "empty": "No active orders found + Order now CTA",
-        "error": "Failed to sync order status + Reconnect button"
+        "loading": "Saving offline transaction...",
+        "empty": "Add items to create manual billing order.",
+        "error": "Failed to save offline billing record."
       },
-      "layout": "Interactive status timeline (Order Placed -> Kitchen Prep -> Ready for Pickup / En Route -> Delivered). Live countdown timer card, order item summary list, and action buttons for support or reordering."
+      "layout": "Bottom sheet form with customer name, phone, item selector, payment method dropdown, and sticky 'Save & Print Bill' CTA."
     },
     {
-      "name": "Profile & Account",
-      "purpose": "Manage student/staff credentials, meal plan balances, and order history.",
+      "name": "SalesSummary",
+      "purpose": "Daily earnings breakdown, revenue charts, and financial export tools.",
       "states": {
-        "loading": "Profile skeleton loader",
-        "empty": "No past orders + Start ordering CTA",
-        "error": "Failed to load profile data + Retry"
+        "loading": "Calculating daily earnings...",
+        "empty": "No sales recorded for this period.",
+        "error": "Failed to load financial records."
       },
-      "layout": "Header card with user avatar, name, campus role badge, and meal balance counter. Settings and preference list rows with tinted icon containers. Order history summary list and secure Sign Out action."
+      "layout": "Earnings hero summary card, daily sales breakdown list, payment method distribution bars, and offline sync log."
     }
   ],
   "images": {
-    "welcome_bg": {
-      "url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=85&w=1000",
-      "dark": "https://images.unsplash.com/photo-1607532941433-304659e8198a?auto=format&fit=crop&q=85&w=1000",
-      "alt": "Fresh organic salad bowl on wooden table"
+    "caterer_hero": {
+      "url": "https://images.unsplash.com/photo-1696937525057-efcb5dbc84e3",
+      "dark": "https://images.unsplash.com/photo-1696937525057-efcb5dbc84e3",
+      "alt": "Botanical forest green texture representing the campcook caterer workspace"
     },
-    "hero_banner": {
-      "url": "https://images.unsplash.com/photo-1551888645-5ec881101c3f?auto=format&fit=crop&q=85&w=1000",
-      "dark": "https://images.unsplash.com/photo-16327121-6327121?auto=format&fit=crop&q=85&w=1000",
-      "alt": "Organic avocado toast and fresh herbs"
-    },
-    "smoothie_bowl": {
-      "url": "https://images.unsplash.com/photo-1534352436920-f658b50b73fe?auto=format&fit=crop&q=85&w=800",
-      "alt": "Healthy green smoothie bowl"
+    "empty_queue": {
+      "url": "https://images.unsplash.com/photo-1765977851728-46e10dafdefa",
+      "alt": "Lush green foliage representing an empty calm kitchen queue"
     }
   },
-  "instructions_to_main_agent": "Ensure all screens strictly adhere to the Editorial Mobile LIGHT personality with botanical green accents (#2E6F40) and paper-white canvas (#FAF9F6). Apply gradient scrims over all images with text overlays. Implement sticky primary CTAs on all transactional screens. Use real logo PNGs or high-quality image selector URLs for all food items and user avatars. Avoid indigo/purple/blue entirely."
+  "instructions_to_main_agent": [
+    "Build the caterer workspace mobile screens inside /app/frontend/app/caterer or equivalent modular folders integrated with existing Expo app structure (/app/frontend/app/_layout.tsx).",
+    "Ensure the caterer tab is visible in bottom navigation when logged in as caterer, alongside a separate Caterer Web Dashboard mock view accessible from settings.",
+    "Implement the live order queue with Accept, Preparing, Ready, and Completed state transitions with instant UI feedback and haptic triggers.",
+    "Connect offline billing order creation to the local database / backend server (/app/backend/server.py) so offline orders persist reliably.",
+    "Strictly maintain the CampCook botanical green look with dense operational kitchen controls and scan-friendly cards, avoiding any generic purple/indigo AI aesthetics."
+  ]
 }

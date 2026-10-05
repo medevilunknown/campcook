@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 
 import { ErrorBoundary } from "@/src/components/error-boundary";
 import { queryClient } from "@/src/query-client";
+import { AppProvider } from "@/src/store";
 
 // Disable logbox errors etc so that users can see the app
 // and agent works as expected.
@@ -18,8 +19,10 @@ export default function RootLayout() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <KeyboardProvider>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }} />
+          <AppProvider>
+            <StatusBar style="dark" />
+            <Stack screenOptions={{ headerShown: false }} />
+          </AppProvider>
         </KeyboardProvider>
       </QueryClientProvider>
     </ErrorBoundary>

@@ -1,0 +1,44 @@
+{
+  "summary": "Backend pytest 9/9 green. Fixed missing tab-bar testIDs (tabBarTestID is a react-navigation v5 prop, ignored by v7; migrated to tabBarButtonTestID in both tab layouts) — this was the root cause of the main agent's caterer-tab-queue timeout. After the fix, ALL requested flows pass: BUG FIX 1 (dish-count-masala-dosa shows 2 after two adds, minus button appears, decrements to 1, cart tab badge shows total), BUG FIX 2 (welcome->home, all 4 customer tabs, home-profile-button, all 4 profile rows + sheets open/close, pickup option persists to storage, detail stepper, detail-add->cart, cart steppers, cash checkout->orders confirmation, sign-out->welcome). Caterer: hidden login route, invalid login error, dashboard (earnings hero, New/Preparing/Ready stats, new-offline-bill-button, live queue), all 4 caterer tabs, queue filters (all/new/prep/ready/done), full status lifecycle Accept->Start prep->Mark ready->Complete with UI updates, order detail page (customer, notes callout, items, total, sticky status action, completed banner), menu management (add Paneer Wrap Rs.90, edit price to Rs.95, availability switch hides it from customer menu), offline billing (steppers, bill-total updates, save, OFFLINE pill in queue), sales tab (revenue hero, payment bars, source breakdown, top dishes). Regression verified end-to-end in one session: customer cash order CC-50070BD8 appeared in caterer New queue, caterer advanced to preparing, customer orders timeline showed 'Preparing your order - Kitchen is on it'. HIGH bug found: every customer login mints a NEW user id (token), so order history is lost on re-login.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/auth/login", "issue": "Each login generates a fresh token and sets user.id = token (server.py:170-176); orders are keyed by user_id = raw session token (session_user() server.py:138-142 returns the token). Re-logging in with the SAME identifier (STU12345) produces a different user id (verified: campcook_1a2ce0... vs campcook_f4dd57...), so GET /api/orders returns [] and 'My orders' is empty after any sign-out/sign-in. Order history is effectively lost per login. Fix: upsert user by identifier with a STABLE user id, store sessions in a sessions collection mapping token->user_id, and have session_user resolve the user_id from the token.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/auth/login", "issue": "Session tokens are never persisted, validated against the DB, or expired — any bearer string is accepted as a user identity (session_user just returns the header value). Acceptable for demo, but flag for production hardening."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "OrdersScreen", "issue": "Status hero headline stays 'Order placed!' even when the order is accepted/preparing/ready (only payment_pending and completed change the title). Timeline dots are correct; headline is stale.", "testID": "active-order-number", "priority": "LOW"},
+      {"component": "MenuManageScreen dish-form-modal", "issue": "React warning toast on web when the modal closes: 'A component is changing a controlled input to be uncontrolled' — TextInput value={form?.name} becomes undefined when form is set to null. Use value={form?.name ?? ''} etc.", "testID": "form-name-input", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Checkout -> router.replace('/orders')", "issue": "Expo-router web keeps a hidden duplicate of the (customer) tab bar mounted after replace, so [data-testid='tab-*'] resolves to 2-3 elements (one invisible at y=0). Not user-visible, but tests must use ':visible' locators.", "affected_testIDs": ["tab-home", "tab-orders", "tab-cart", "tab-profile"]},
+      {"flow": "Customer re-login -> My orders", "issue": "Because backend mints a new user id per login, the orders tab shows 'No active orders' after re-login even though the identifier has past orders. Frontend is correct; backend identity bug.", "affected_testIDs": ["orders-screen", "active-order-number"]}
+    ],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "Customer + Caterer Tabs layouts", "issue": "Screens used tabBarTestID (react-navigation v5 prop, silently ignored by bottom-tabs v7 shipped with expo-router 57) so tab buttons had NO testID on web and were untestable. Fixed by migrating to tabBarButtonTestID. Reference: /app/frontend/app/(customer)/_layout.tsx:39-42 and /app/frontend/app/caterer/(tabs)/_layout.tsx:28-31"}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_campcook_routes.py", "/app/backend/tests/test_caterer_routes.py", "/app/tests/ui_regression_campcook.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "HIGH: Fix customer identity in backend — stable user id per identifier (upsert without overwriting id), separate sessions collection token->user_id, session_user resolves via DB. Then re-test: sign out -> sign in as STU12345 -> orders tab must show previous orders.",
+    "LOW: orders.tsx — make the status hero headline reflect the actual status (e.g. 'Order accepted', 'Preparing', 'Ready for pickup') instead of always 'Order placed!'.",
+    "LOW: menu.tsx dish form — default TextInput values to '' when form is null to remove the controlled/uncontrolled warning.",
+    "Cleanup: 'Test Lemon Rice' (Rs.65, created by backend test) is currently AVAILABLE on the customer menu — hide or delete it; test dish 'Paneer Wrap' was set unavailable as instructed."
+  ],
+  "critical_code_review_comments": [
+    "server.py session_user() (line 138) trusts the raw x-session-token header as the user identity with no DB lookup, expiry, or invalidation — identity/security flaw combined with the per-login id rotation.",
+    "Caterer queue uses FlatList with virtualization: off-screen order cards are unmounted from the DOM on web (correct behavior; tests must scroll the queue-list container incrementally).",
+    "No deprecated expo packages found (no expo-av/barcode-scanner/background-fetch). File sizes healthy (largest: server.py 466 lines). All interactive elements carry testIDs. Mongo _id excluded from API responses."
+  ],
+  "updated_files": ["/app/frontend/app/(customer)/_layout.tsx", "/app/frontend/app/caterer/(tabs)/_layout.tsx", "/app/tests/ui_regression_campcook.py", "/app/test_reports/iteration_2.json"],
+  "success_rate": {"backend": "100% (9/9 pytest)", "frontend": "100% of requested flows pass after tabBarButtonTestID fix (1 HIGH backend identity bug affects re-login order history)"},
+  "seed_data_creation": "Test data created: customer orders CC-FC23B800 (completed), CC-3EF33F6B (placed), CC-6E5CAFFB (accepted), CC-50BA3E0B (preparing), CC-50070BD8 (preparing); offline bill CC-OFF-5E7CD7 (Walk In Ravi, 2x Masala Dosa, cash paid); menu dish 'Paneer Wrap' Rs.95 set UNAVAILABLE. Note: preview environment has live external traffic (other users' orders appear in the queue).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Tab testIDs now work via tabBarButtonTestID. After checkout redirect, duplicate hidden tab bars exist in DOM — use ':visible' locators. Caterer queue FlatList virtualizes — scroll queue-list in ~350px steps and re-query; orders leave the New filter once accepted (use queue-filter-prep to find accepted orders). Dish ids: chai (not masala-chai), coffee, veg-thali, masala-dosa, fried-rice, veg-sandwich. Live external traffic on the preview URL can advance/move test orders — verify via API when in doubt. Re-login as the same customer identifier yields a NEW user id (backend bug) so order history is empty after re-login; keep a single browser session for customer->caterer regression.",
+  "rca_of_issue": "Issue 1 (reported by main agent): caterer-tab-queue click timed out. RCA: Tabs.Screen options used tabBarTestID, a react-navigation v5-only prop; bottom-tabs v7 (expo-router 57) ignores it, so no data-testid was emitted for ANY tab button in either tab bar. Fix: tabBarButtonTestID. Verified all 8 tabs navigate. Issue 2 (found this round): order history lost on re-login. Reproduction: POST /api/auth/login twice with identifier STU12345 -> different user.id each time; GET /api/orders with the second token returns []. Root cause: server.py:173-175 sets user.id = fresh uuid token and session_user() treats the token itself as the user id. Mitigation: stable user id keyed by identifier + sessions collection."
+}

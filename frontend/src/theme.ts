@@ -40,49 +40,49 @@ const light = {
   // Surfaces: backgrounds, from the screen down to small fills.
   // Each `on` key is the text and icon color for that background.
   // ---------------------------------------------------------------------------
-  surface: "#FAF9F6",
+  surface: "#F4F6F2",
   onSurface: "#1A2E22",
-  surfaceSecondary: "#F0EFEA",
-  onSurfaceSecondary: "#2C4435",
-  surfaceTertiary: "#E5E3DB",
-  onSurfaceTertiary: "#3D5E4A",
-  surfaceInverse: "#111C16",
-  onSurfaceInverse: "#F7F6F2",
-  muted: "#5C7367",
+  surfaceSecondary: "#E5EBE1",
+  onSurfaceSecondary: "#2D4A38",
+  surfaceTertiary: "#D6E0D0",
+  onSurfaceTertiary: "#3B5C47",
+  surfaceInverse: "#112218",
+  onSurfaceInverse: "#F4F6F2",
+  muted: "#5A7363",
 
   // ---------------------------------------------------------------------------
   // Brand: the identity color and the fills built from it.
   // Neutral by default; replace with the design guidelines values.
   // ---------------------------------------------------------------------------
-  brand: "#2E6F40",
+  brand: "#2E5C3E",
   onBrand: "#FFFFFF",
-  brandPrimary: "#2E6F40",
+  brandPrimary: "#2E5C3E",
   onBrandPrimary: "#FFFFFF",
-  brandSecondary: "#3B8C53",
+  brandSecondary: "#4B7A5D",
   onBrandSecondary: "#FFFFFF",
-  brandTertiary: "#E2EFE6",
-  onBrandTertiary: "#1F4A2B",
+  brandTertiary: "#C2D4C6",
+  onBrandTertiary: "#1A2E22",
 
   // ---------------------------------------------------------------------------
   // Status: semantic only, never decorative. Fill for badges, banners and
   // toasts; the `on` key is text on that fill. The plain key is also safe as
   // text on `surface`.
   // ---------------------------------------------------------------------------
-  success: "#2E6F40",
+  success: "#366B4A",
   onSuccess: "#FFFFFF",
-  warning: "#C98A2E",
+  warning: "#B8860B",
   onWarning: "#FFFFFF",
-  error: "#B83A3A",
+  error: "#A33B2B",
   onError: "#FFFFFF",
-  info: "#2E5A88",
+  info: "#3B6978",
   onInfo: "#FFFFFF",
 
   // ---------------------------------------------------------------------------
   // Lines
   // ---------------------------------------------------------------------------
-  border: "#E2E0D8",
-  borderStrong: "#C8C4B7",
-  divider: "#EBE8E0",
+  border: "#D2DEC9",
+  borderStrong: "#2E5C3E",
+  divider: "#E2EADE",
 };
 
 export type ThemeColors = typeof light;

@@ -1,0 +1,34 @@
+{
+  "summary": "Focused re-verification of iteration_2 fixes. ALL requested items PASS: (1) CRITICAL REGRESSION — order history survives sign-out/sign-in as STU12345, verified end-to-end in UI (orders CC-8C2F2D4A + CC-B2108DD4 listed after re-login; previously vanished) AND via curl (login twice, second token's GET /orders returned the order placed by the first token; stable user_id campcook_user_4a03861c983072c1, sessions collection in use). (2) Customer smoke passes: welcome sign-in -> menu -> 2x chai (stepper count 2) -> cart ₹40 -> cash checkout -> 'Order placed!' confirmation. (3) Caterer smoke passes: CAT1001 login -> dashboard (earnings ₹2885, stats, live queue) -> queue tab (6 New orders) -> Accept transition on CC-8C2F2D4A works (moved to Prep, 'Accepted', 'Start prep' shown) -> menu tab (8 dish rows + availability switches) -> sales tab (revenue, payment/source breakdown, top dishes). (4) Backend pytest 9/9 green. (5) Stale pre-sessions token -> /api/orders 401 as expected; app shows 'No active orders' gracefully, no crash/red screen/console errors. Bonus: orders headline now maps real status (shows 'Order accepted' after caterer accepted); dish-form modal controlled-input warning GONE on close. ONE discrepancy found: 'Test Lemon Rice' is STILL visible on the customer menu (available:true in DB) — the backend test no longer creates it, but the leftover dish was never hidden/deleted, contradicting the claim in the review request.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/menu", "issue": "Leftover dish 'test-lemon-rice' (Test Lemon Rice, ₹65) still has available:true in MongoDB and is returned/shown on the customer menu. The updated test no longer creates it, but the previously-seeded document was never cleaned up. Paneer Wrap is correctly unavailable."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Caterer Menu > dish-form-modal", "issues": ["At 375x667 viewport the modal's Cancel/Save buttons render below the fold (form-cancel-button outside viewport; backdrop tap needed to close). Modal card is not scrollable — consider ScrollView inside modal for short screens. LOW priority."]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_campcook_routes.py", "/app/backend/tests/test_caterer_routes.py", "/app/test_reports/pytest/pytest_results.xml", "/app/test_reports/customer_orders_after_relogin.png", "/app/test_reports/stale_session.png", "/app/test_reports/caterer_sales.png"],
+  "action_items": [
+    "LOW: Hide or delete leftover dish 'test-lemon-rice' from the menu collection (set available:false) — it is still visible to customers, contradicting the stated cleanup.",
+    "LOW: Make the caterer dish-form modal scrollable so Cancel/Save are reachable on short viewports."
+  ],
+  "critical_code_review_comments": [
+    "Auth fix verified in code and behavior: login upserts user with sha256-based stable id (server.py:182-185), create_session() stores token->user_id in db.sessions (server.py:138-141), session_user() validates token against sessions and 401s unknown tokens (server.py:144-151). Caterer login uses stable id campcook_caterer_<staff_id> + sessions (server.py:363-367).",
+    "orders.tsx HEADLINE map now covers accepted/preparing/ready/completed (verified live: 'Order accepted').",
+    "Dish-form modal no longer nulls form on close (only setFormOpen(false)); no controlled/uncontrolled warning observed in console."
+  ],
+  "updated_files": ["/app/test_reports/iteration_3.json"],
+  "success_rate": {"backend": "100% (9/9 pytest + curl persistence + stale-token 401)", "frontend": "100% of requested flows pass (customer re-login persistence, customer smoke, caterer smoke, stale-session graceful handling, headline + modal-warning fixes)"},
+  "seed_data_creation": "Test orders created as STU12345: CC-B2108DD4 (2x Masala Chai, cash, placed) via API and CC-8C2F2D4A (2x Masala Chai, cash, placed->accepted by caterer) via UI. Both intentionally left to prove re-login persistence.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Customer identity is now stable per identifier (sha256) with a sessions collection; re-login preserves order history. Old orders from iteration_2 were tied to ephemeral pre-fix user ids and no longer appear for STU12345 — expected. Known DOM artifacts: duplicate hidden screens/tab bars after router.replace — always use ':visible' locators. 'Test Lemon Rice' still shows on customer menu (leftover DB doc). Dish-form modal cancel/save buttons off-viewport at 375x667 — close via backdrop tap (mouse.click at y~60).",
+  "rca_of_issue": "Re-verified fix for iteration_2 HIGH bug: per-login user id rotation. Root cause was user.id = fresh uuid per login with session_user() trusting the raw bearer token as identity. Fix confirmed working: stable sha256-based user id + sessions collection; curl reproduced old repro steps (two logins, second token) and GET /orders returned the order placed under the first token; UI sign-out/sign-in flow shows both prior orders. New minor finding: leftover 'Test Lemon Rice' doc (available:true) predates the updated test and was never cleaned — only the test was fixed, not the data."
+}
