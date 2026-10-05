@@ -27,6 +27,12 @@ Build a mobile app named campcook for fast, fresh campus canteen ordering, with 
 - Auth hardening: stable user id per identifier + `sessions` collection; order history survives sign-out/sign-in (was the HIGH bug found in testing).
 - Testing agent passes: full customer + caterer flows green; focused re-verification of auth fix green; pytest 9/9.
 
+## Implemented (2026-10-05, round 4)
+- Emergent-managed Google sign-in is live: web redirect + native auth-session flow, `POST /api/auth/session` exchange (one-time session_id guard, user upsert by email, 7-day sessions), `GET /api/auth/me` validation on startup, `google_managed_ready: true`.
+- Discreet "Kitchen staff? Caterer sign-in" link on the welcome screen → `/caterer/login` (works in Expo Go where there is no address bar).
+- Caterer sales export: CSV (share sheet on native, file download on web) and daily PDF report via expo-print + expo-sharing (native; web shows guidance).
+- Testing agent pass: 14/14 pytest, all UI flows green.
+
 ## Prioritized backlog
 
 ### P0

@@ -1,7 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { getSession, MenuItem, Order, request, SESSION_KEY } from "@/src/api";
+import { consumeInitialUrl, consumeWebCallback, exchangeSessionId, extractSessionId } from "@/src/google-auth";
 import { storage } from "@/src/utils/storage";
+import * as Linking from "expo-linking";
 
 export type Session = { token: string; user: Record<string, string | number> };
 
@@ -36,10 +38,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    getSession().then((value) => {
-      setSession(value);
-      setLoadingSession(false);
+    let cancelled = false;
+    (async () => {
+      // Google callback must be processed before any stored-session restore.
+      const googleSession = (await consumeWebCallback()) ?? (await consumeInitialUrl());
+      if (googleSession) {
+        await storage.secureSet(SESSION_KEY, googleSession);
+        if (!cancelled) {
+          setSession(googleSession);
+          setLoadingSession(false);
+        }
+        return;
+      }
+      const value = await getSession();
+      if (value) {
+        try {
+          await request("/auth/me", {}, value.token);
+        } catch (e) {
+          if ((e as Error).message.toLowerCase().includes("sign in")) {
+            await storage.secureRemove(SESSION_KEY);
+            if (!cancelled) {
+              setSession(null);
+              setLoadingSession(false);
+            }
+            return;
+          }
+        }
+      }
+      if (!cancelled) {
+        setSession(value);
+        setLoadingSession(false);
+      }
+    })();
+    // Hot deep links: Google redirect arriving while the app is running.
+    const subscription = Linking.addEventListener("url", (event) => {
+      const sessionId = extractSessionId(event.url);
+      if (!sessionId) return;
+      exchangeSessionId(sessionId).then(async (googleSession) => {
+        if (googleSession) {
+          await storage.secureSet(SESSION_KEY, googleSession);
+          setSession(googleSession);
+        }
+      });
     });
+    return () => {
+      cancelled = true;
+      subscription.remove();
+    };
   }, []);
 
   const refreshMenu = useCallback(() => {

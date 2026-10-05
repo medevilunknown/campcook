@@ -24,5 +24,5 @@ export const useStyles = makeStyles((colors) => StyleSheet.create({
   modalBody: { color: colors.onSurfaceSecondary, fontSize: 14, lineHeight: 21 },
   modalOption: { minHeight: 50, borderRadius: 12, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 12 },
   modalOptionActive: { borderColor: colors.brandPrimary, backgroundColor: colors.brandTertiary },
-  modalOptionText: { color: colors.onSurface, fontSize: 14, fontWeight: "700", flex: 1 },
+  kitchenLink: { color: colors.muted, fontSize: 12, textAlign: "center", marginTop: 14, fontWeight: "700" },
 }));

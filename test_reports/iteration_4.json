@@ -1,0 +1,33 @@
+{
+  "summary": "Focused verification of this round's features — ALL PASS. (1) Google sign-in WEB flow: google-signin-button navigates to https://auth.emergentagent.com/oauth/?redirect=<app origin>/ (redirect param verified = app origin). Simulated return to <origin>/#session_id=fake-test-id-123: app calls POST /api/auth/session, receives 401, stays on welcome screen, no crash, no stuck spinner ('Continue to campcook' button interactive, 0 loading indicators). The only console errors during this flow were a 404 for auth.emergentagent.com's own background asset (third-party page, not our app) and the expected 401 from /api/auth/session. (2) Backend Google endpoints: new test file test_google_auth.py 5/5 — invalid session_id -> 401 'Invalid or expired Google sign-in session'; replay of same id -> 401 'This sign-in link was already used'; /auth/me without token -> 401; unknown token -> 401; /api/auth/google available:true; /api/config google_managed_ready:true; too-short session_id -> 422. (3) Kitchen sign-in link: visible on welcome screen, navigates to /caterer/login, CAT1001 login works, dashboard loads. (4) Sales export: export-csv-button fired a real browser download campcook-sales-2026-10-05.csv (43 lines; verified content includes summary lines Date/Total revenue/Orders/Completed + orders table with header and data rows), export-message 'CSV ready — check your downloads/share sheet.'; export-pdf-button on web shows guidance 'PDF export works in the mobile app — use CSV here, or open CampCook in Expo Go.' (5) Regression smoke: STU12345 login -> home menu (exactly 6 dishes) -> add Masala Chai -> cart (₹20) -> checkout -> Cash at counter (testID pay-cash) -> 'Order placed!' confirmation CC-8EEDA6DD -> sign out -> sign in -> orders list contains CC-8EEDA6DD plus prior CC-8C2F2D4A and CC-B2108DD4 (persistence holds). (6) No console/page errors on welcome mount from Google callback processing with no session_id. Full backend pytest 14/14 green. Bonus: iteration_3 leftover 'Test Lemon Rice' is now GONE from the menu (DB cleaned). No deprecated Expo packages found (no expo-av/barcode-scanner/background-fetch).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/auth/session", "issue": "Design note (matches spec, not a bug): the one-time guard burns the session_id BEFORE the Emergent exchange, so a session_id that fails exchange (invalid/expired) can never be retried. Also data['session_token'] is accessed unguarded — a 200 response missing session_token would 500. Both LOW priority hardening items."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_google_auth.py", "/app/backend/tests/test_campcook_routes.py", "/app/backend/tests/test_caterer_routes.py", "/app/test_reports/pytest/pytest_results.xml", "/app/test_reports/google_callback_401.png", "/app/test_reports/sales_export.png", "/app/test_reports/customer_order_confirm.png", "/app/test_reports/orders_after_relogin.png"],
+  "action_items": [
+    "LOW/optional: in /api/auth/session use data.get('session_token') with a 401 fallback instead of data['session_token'] to avoid a 500 on malformed Emergent responses.",
+    "LOW/optional: consider only burning session_id in db.used_session_ids after a successful exchange (currently burned before) — spec-compliant as-is."
+  ],
+  "critical_code_review_comments": [
+    "google-auth.ts web flow correct: redirects to auth.emergentagent.com with origin redirect, extractSessionId parses ?/#/& forms, one-time 'exchanged' Set removes id on failure so a retry after reload works.",
+    "store.tsx processes Google callback (consumeWebCallback) before stored-session restore and validates stored sessions via /auth/me, clearing on 401 messages containing 'sign in' — both backend 401 messages ('Please sign in to continue', 'Session expired, please sign in again') match this check. Verified live: no errors on mount without session_id.",
+    "export.ts CSV builder escapes all fields, includes summary + orders table; web uses blob download, native uses expo-file-system/legacy + expo-sharing; PDF web path returns guidance string instead of attempting expo-print. Verified end-to-end with a real download event.",
+    "sales.tsx filters /caterer/orders by sales.date before export and handles the empty case ('No orders to export for today yet.')."
+  ],
+  "updated_files": ["/app/backend/tests/test_google_auth.py", "/app/test_reports/iteration_4.json"],
+  "success_rate": {"backend": "100% (14/14 pytest incl. 5 new Google auth tests)", "frontend": "100% of requested flows pass (Google web redirect + simulated 401 callback, kitchen link, caterer login/dashboard, CSV download + PDF guidance, customer smoke + re-login persistence, clean console on mount)"},
+  "seed_data_creation": "Test order CC-8EEDA6DD (1x Masala Chai, cash) placed as STU12345 via UI and intentionally left to demonstrate persistence. TEST-fake-* session ids burned in db.used_session_ids by the replay-guard test (harmless).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All round-4 features verified working. Payment screen testIDs: pay-razorpay, pay-cash, place-order-button (NOT 'Cash at counter' text — use testIDs). Caterer login testIDs: caterer-id-input, caterer-login-button. Menu now exactly 6 dishes; Test Lemon Rice cleaned up. Known DOM artifacts persist: hidden duplicate screens/tab bars after router.replace — always use ':visible' locators. The 404 console error for auth.emergentagent.com/backgrounds/light_cloud_bg.webp is a third-party auth-page asset, not our app.",
+  "rca_of_issue": "No bugs found this round. One test-authoring note: checkout flow requires selecting payment method via testID pay-cash before place-order-button; text-based selectors for 'Cash at counter' do not resolve because the label sits inside a Pressable without matching text locator semantics."
+}

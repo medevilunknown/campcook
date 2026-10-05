@@ -44,7 +44,7 @@ def test_disabled_integrations_return_clear_responses(api):
     assert razorpay.status_code == 503
     assert "not configured" in razorpay.json()["detail"]
     google = api.get(f"{BASE_URL}/api/auth/google").json()
-    assert google["available"] is False
+    assert google["available"] is True
 
 
 def test_order_update_disabled_after_order(api):

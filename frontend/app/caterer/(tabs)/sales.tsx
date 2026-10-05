@@ -2,11 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { request } from "@/src/api";
-import { PAYMENT_LABEL, SalesSummary, useCaterer } from "@/src/caterer";
+import { KitchenOrder, PAYMENT_LABEL, SalesSummary, useCaterer } from "@/src/caterer";
+import { buildCsv, buildHtml, shareCsv, sharePdf } from "@/src/export";
 import { makeStyles, useTheme } from "@/src/theme";
 import { IconName } from "@/src/ui";
 
@@ -35,6 +36,31 @@ export default function SalesScreen() {
       load();
     }, [load]),
   );
+
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState("");
+
+  const doExport = async (kind: "csv" | "pdf") => {
+    if (!session || !sales) return;
+    setExporting(true);
+    setExportMessage("");
+    try {
+      const orders = (await request<KitchenOrder[]>("/caterer/orders", {}, session.token)).filter((order) => order.created_at.startsWith(sales.date));
+      if (!orders.length) {
+        setExportMessage("No orders to export for today yet.");
+        return;
+      }
+      const error =
+        kind === "csv"
+          ? await shareCsv(`campcook-sales-${sales.date}.csv`, buildCsv(sales, orders))
+          : await sharePdf(`campcook-sales-${sales.date}.pdf`, buildHtml(sales, orders));
+      setExportMessage(error ?? (kind === "csv" ? "CSV ready — check your downloads/share sheet." : "PDF ready — check your share sheet."));
+    } catch (e) {
+      setExportMessage((e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const payments = Object.entries(sales?.by_payment_method ?? {});
   const maxPayment = Math.max(1, ...payments.map(([, amount]) => amount));
@@ -106,6 +132,19 @@ export default function SalesScreen() {
           </View>
         ))}
       </View>
+
+      <Text style={styles.sectionTitle}>Export & share</Text>
+      <View style={styles.exportRow}>
+        <Pressable testID="export-csv-button" onPress={() => doExport("csv")} disabled={exporting} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
+          <Ionicons name="document-text-outline" size={18} color={colors.brandPrimary} />
+          <Text style={styles.exportText}>{exporting ? "Preparing..." : "Share CSV"}</Text>
+        </Pressable>
+        <Pressable testID="export-pdf-button" onPress={() => doExport("pdf")} disabled={exporting} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
+          <Ionicons name="document-outline" size={18} color={colors.brandPrimary} />
+          <Text style={styles.exportText}>{exporting ? "Preparing..." : "Daily PDF"}</Text>
+        </Pressable>
+      </View>
+      {!!exportMessage && <Text testID="export-message" style={styles.exportMessage}>{exportMessage}</Text>}
     </ScrollView>
   );
 }
@@ -149,5 +188,10 @@ const useStyles = makeStyles((colors) =>
     sourceRow: { flexDirection: "row", alignItems: "center", gap: 10 },
     sourceLabel: { color: colors.onSurface, fontSize: 13, fontWeight: "700", flex: 1 },
     rank: { color: colors.brandPrimary, fontSize: 14, fontWeight: "900", width: 18 },
+    exportRow: { flexDirection: "row", gap: 10 },
+    exportButton: { flex: 1, minHeight: 48, borderRadius: 12, backgroundColor: colors.surfaceSecondary, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 },
+    exportText: { color: colors.brandPrimary, fontWeight: "800", fontSize: 13 },
+    exportMessage: { color: colors.muted, fontSize: 12, textAlign: "center" },
+    pressed: { opacity: 0.8 },
   }),
 );

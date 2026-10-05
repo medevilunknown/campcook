@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
 import logging
@@ -173,7 +173,7 @@ async def root() -> dict[str, str]:
 
 @api_router.get("/config")
 async def config() -> dict[str, bool]:
-    return {"razorpay_ready": razorpay_ready(), "twilio_otp_ready": twilio_ready(), "twilio_sms_ready": twilio_messaging_ready(), "twilio_whatsapp_ready": twilio_whatsapp_ready(), "google_managed_ready": bool(os.getenv("EMERGENT_AUTH_BASE_URL"))}
+    return {"razorpay_ready": razorpay_ready(), "twilio_otp_ready": twilio_ready(), "twilio_sms_ready": twilio_messaging_ready(), "twilio_whatsapp_ready": twilio_whatsapp_ready(), "google_managed_ready": True}
 
 
 @api_router.post("/auth/login")
@@ -188,9 +188,7 @@ async def login(body: LoginRequest) -> dict[str, Any]:
 
 @api_router.get("/auth/google")
 async def google_auth_config() -> dict[str, Any]:
-    if not os.getenv("EMERGENT_AUTH_BASE_URL"):
-        return {"available": False, "message": "Emergent managed Google sign-in needs the project callback configuration."}
-    return {"available": True, "url": os.getenv("EMERGENT_AUTH_BASE_URL")}
+    return {"available": True, "url": "https://auth.emergentagent.com"}
 
 
 @api_router.get("/menu")
@@ -276,6 +274,45 @@ async def send_order_update(body: TwilioOrderUpdateRequest, request: Request) ->
 async def twilio_status_callback(request: Request) -> dict[str, bool]:
     await request.form()
     return {"received": True}
+
+
+class GoogleSessionRequest(BaseModel):
+    session_id: str = Field(min_length=8, max_length=200)
+
+
+@api_router.post("/auth/session")
+async def google_session(body: GoogleSessionRequest) -> dict[str, Any]:
+    inserted = await db.used_session_ids.update_one({"session_id": body.session_id}, {"$setOnInsert": {"created_at": now_iso()}}, upsert=True)
+    if not inserted.upserted_id:
+        raise HTTPException(status_code=401, detail="This sign-in link was already used")
+    import httpx
+
+    async with httpx.AsyncClient(timeout=15) as http_client:
+        response = await http_client.get("https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data", headers={"X-Session-ID": body.session_id})
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid or expired Google sign-in session")
+    data = response.json()
+    email = str(data.get("email") or "").lower()
+    if not email:
+        raise HTTPException(status_code=401, detail="Google account did not return an email")
+    existing = await db.users.find_one({"email": email}, {"_id": 0})
+    user_id = existing["id"] if existing else f"campcook_google_{uuid.uuid4().hex[:12]}"
+    user = {"id": user_id, "identifier": email, "email": email, "role": (existing or {}).get("role", "student"), "name": data.get("name") or email.split("@")[0].replace(".", " ").title(), "picture": data.get("picture"), "meal_balance": (existing or {}).get("meal_balance", 250), "auth_provider": "google", "created_at": now_iso()}
+    await db.users.update_one({"id": user_id}, {"$set": user}, upsert=True)
+    token = data.get("session_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Google sign-in did not return a session token")
+    await db.sessions.insert_one({"token": token, "user_id": user_id, "created_at": now_iso(), "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()})
+    return {"token": token, "user": user}
+
+
+@api_router.get("/auth/me")
+async def auth_me(request: Request) -> dict[str, Any]:
+    user_id = await session_user(request)
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="Please sign in to continue")
+    return {"user": user}
 
 
 # ---------------------------------------------------------------------------

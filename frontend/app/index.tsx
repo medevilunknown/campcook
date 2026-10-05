@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Redirect } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-import { post, request } from "@/src/api";
+import { post } from "@/src/api";
+import { startGoogleSignIn } from "@/src/google-auth";
 import { Session, useApp } from "@/src/store";
 import { useTheme } from "@/src/theme";
 import { useStyles } from "@/src/ui";
@@ -13,6 +14,7 @@ export default function WelcomeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const { session, loadingSession, signIn } = useApp();
+  const router = useRouter();
   const [role, setRole] = useState<"student" | "staff">("student");
   const [identifier, setIdentifier] = useState("");
   const [phone, setPhone] = useState("");
@@ -57,11 +59,17 @@ export default function WelcomeScreen() {
   };
 
   const google = async () => {
+    setBusy(true);
+    setMessage("");
     try {
-      const result = await request<{ available: boolean; message?: string }>("/auth/google");
-      setMessage(result.available ? "Open the managed Google sign-in from your project callback." : result.message ?? "Google sign-in is not configured yet.");
+      const result = await startGoogleSignIn();
+      if (result === "cancelled") setMessage("Google sign-in was cancelled.");
+      else if (result) await signIn(result);
+      else setMessage("Google sign-in failed. Please try again.");
     } catch (e) {
       setMessage((e as Error).message);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -115,6 +123,9 @@ export default function WelcomeScreen() {
           </Pressable>
         </LinearGradient>
         <Text style={styles.privacy}>By continuing, you agree to your campus dining terms.</Text>
+        <Pressable testID="kitchen-signin-link" onPress={() => router.push("/caterer/login")} hitSlop={10}>
+          <Text style={styles.kitchenLink}>Kitchen staff? Caterer sign-in</Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
