@@ -325,6 +325,14 @@ ACTIVE_STATUSES = ["placed", "accepted", "preparing", "ready"]
 QUEUE_FILTERS = {"new": ["placed"], "prep": ["accepted", "preparing"], "ready": ["ready"], "done": ["completed"], "active": ACTIVE_STATUSES}
 
 
+def day_param(value: str | None) -> str | None:
+    if value is None:
+        return None
+    if len(value) != 10 or value[4] != "-" or value[7] != "-" or not value.replace("-", "").isdigit():
+        raise HTTPException(status_code=400, detail="date must be in YYYY-MM-DD format")
+    return value
+
+
 class CatererLoginRequest(BaseModel):
     identifier: str = Field(min_length=2, max_length=120)
 
@@ -405,12 +413,15 @@ async def caterer_login(body: CatererLoginRequest) -> dict[str, Any]:
 
 
 @api_router.get("/caterer/orders")
-async def caterer_orders(request: Request, status: str | None = None) -> list[dict[str, Any]]:
+async def caterer_orders(request: Request, status: str | None = None, date: str | None = None) -> list[dict[str, Any]]:
     await caterer_user(request)
     query: dict[str, Any] = {}
     if status and status in QUEUE_FILTERS:
         query["status"] = {"$in": QUEUE_FILTERS[status]}
-    docs = await db.orders.find(query).sort("created_at", -1).to_list(200)
+    date = day_param(date)
+    if date:
+        query["created_at"] = {"$regex": f"^{date}"}
+    docs = await db.orders.find(query).sort("created_at", -1).to_list(500)
     return await enrich_orders(docs)
 
 
@@ -470,7 +481,7 @@ async def caterer_update_menu_item(item_id: str, body: MenuItemUpdate, request: 
 @api_router.get("/caterer/sales")
 async def caterer_sales(request: Request, date: str | None = None) -> dict[str, Any]:
     await caterer_user(request)
-    day = date or datetime.now(timezone.utc).date().isoformat()
+    day = day_param(date) or datetime.now(timezone.utc).date().isoformat()
     docs = await db.orders.find({"created_at": {"$regex": f"^{day}"}}, {"_id": 0}).to_list(500)
     billed = [doc for doc in docs if doc.get("status") != "payment_pending"]
     by_payment: dict[str, int] = {}

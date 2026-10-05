@@ -1,0 +1,38 @@
+{
+  "summary": "Sales History feature — ALL FLOWS PASS. (1) Backend: full pytest suite 14/14 green (note: the 'history case' was added as assertions INSIDE test_offline_billing_persists_and_counts_in_sales, so count stays 14, not the 15/15 claimed in the request — coverage exists: sales?date=today == default, orders?date= filters, sales?date=2020-01-01 zero). Independently curl-verified: sales default == explicit today (₹5545/53 orders at test time), sales?date=yesterday -> 0/0 with empty by_payment_method/by_source/top_items, sales?date=2020-01-01 -> 0/0, orders?date=today -> 53, orders?date=yesterday -> 0. (2) Sales date navigation UI (CAT1001, mobile 390x844): sales-date-label shows today; date-next-button disabled at today (click no-op, opacity 0.5); 'Back to today' hidden on today; date-prev-button -> label 2026-10-04, total ₹0, empty states 'No sales recorded for this date.' + 'No dishes sold yet.' render, date-today-button appears; prev x3 + next x1 lands exactly 2 days back (2026-10-03); date-today-button restores today (₹5545). (3) Exports: on empty past date export-csv-button shows export-message 'No orders to export for today yet.' and NO download fires (verified via download listener); on today a real browser download fires with exact filename campcook-sales-2026-10-05.csv and message 'CSV ready — check your downloads/share sheet.'; export-pdf-button on web shows the intentional native-only guidance. (4) Regression smoke: STU12345 login -> add Masala Chai -> cart ₹20 -> pay-cash -> 'Order placed!' CC-61B17959 -> caterer queue (New filter) contains CC-61B17959; dashboard Today earnings ₹5565 (=5545+20, unaffected structurally); sales tab today ₹5565. No console errors, no red screens. UI design: 44px date-nav touch targets, clean 8pt spacing, good contrast.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/caterer/sales & /api/caterer/orders", "issue": "date query param is interpolated raw into Mongo $regex (^{date}) without format validation. Caterer-only so low risk, but a malformed/regex-laden date string is accepted. Recommend datetime.strptime validation with 400 on bad input.", "priority": "LOW"},
+      {"endpoint": "GET /api/caterer/sales", "issue": "Day boundary is UTC (created_at stored as UTC ISO); frontend computes selectedDate in device-local timezone (sales.tsx:24-28) while the label uses server-returned sales.date. Around midnight local-vs-UTC (e.g. IST 00:00-05:30) prev/next can show the same date twice or skip a day. Edge-case only; consistent for most of the day.", "priority": "LOW"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Sales", "issues": ["Empty-date export message says 'No orders to export for today yet.' even when viewing a PAST date — matches the requested spec but wording is misleading for history view; consider 'No orders to export for this date.'"]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_caterer_routes.py", "/app/test_reports/pytest/pytest_results.xml", "/app/test_reports/sales_history_today.png", "/app/test_reports/smoke_queue_new.png"],
+  "action_items": [
+    "LOW: validate the ?date= param server-side (e.g. datetime.strptime + 400) before using it in the $regex filter.",
+    "LOW/optional: change empty-date export copy to 'No orders to export for this date.' (current wording says 'today' on past dates).",
+    "LOW/optional: align frontend selectedDate with UTC (toISOString of a UTC-shifted date) to avoid local/UTC day-boundary drift.",
+    "No action needed on pytest count — request claimed 15/15 but the history case was folded into an existing test; suite is 14/14 with full history coverage."
+  ],
+  "critical_code_review_comments": [
+    "sales.tsx: date nav uses dayOffset with Math.max(0, value-1) guard for next; selectedDate memoized; export fetches /caterer/orders?date=<sales.date> (server-echoed date, correct) and guards the zero-order case before building the file. Clean.",
+    "server.py caterer_orders: date filter $regex '^{date}' on created_at, cap raised to 500 via to_list(500) — confirmed. caterer_sales: payment_pending excluded from revenue but counted in order_count/status_counts — consistent with prior behavior.",
+    "export.ts: web CSV via blob+anchor download (fires real download event — verified), native via expo-file-system/legacy + expo-sharing; PDF on web intentionally returns guidance string. No deprecated Expo packages (no expo-av, expo-barcode-scanner, expo-background-fetch).",
+    "All interactive elements on the sales screen have testIDs; tabs use tabBarButtonTestID (caterer-tab-sales etc.)."
+  ],
+  "updated_files": ["/app/test_reports/iteration_5.json"],
+  "success_rate": {"backend": "100% (14/14 pytest + direct curl verification of date-filtered sales/orders)", "frontend": "100% of requested flows pass (date nav incl. disabled next & back-to-today, empty-date export guard, today CSV download with correct filename, PDF web guidance, customer cash order -> caterer New queue, dashboard Today & sales totals updated correctly)"},
+  "seed_data_creation": "Test order CC-61B17959 (1x Masala Chai, cash, ₹20) placed as STU12345 via UI and left in the queue for persistence demonstration. NOTE: pytest test_menu_management recreates 'Test Lemon Rice' each run — it now appears in today's top dishes (1 sold); the iteration_4 note 'menu exactly 6 dishes / Test Lemon Rice gone' no longer holds after a pytest run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Sales history fully working. Sales tab testIDs: sales-screen, sales-date-label, sales-total, date-prev-button, date-next-button, date-today-button, export-csv-button, export-pdf-button, export-message. Tab bar testIDs: caterer-tab-today/queue/menu/sales; customer tab-home/orders/cart/profile. Downloads in Playwright: register page.on('download') — blob anchor downloads are captured. Direct urllib/requests from inside the browser_automation sandbox get 403 from the WAF — use curl via bash or page.evaluate(fetch) instead. Duplicate hidden screens/tab bars after router.replace persist — always use ':visible'. Today's baseline revenue moves as tests add orders (was ₹5545 -> ₹5565 this round).",
+  "rca_of_issue": "No bugs found. Two test-infra notes: (a) the '15/15' expectation vs actual 14/14 is because history assertions were appended to test_offline_billing_persists_and_counts_in_sales rather than a new test function — functionally equivalent; (b) in-sandbox urllib calls to the public URL are WAF-blocked (403), not an app issue."
+}

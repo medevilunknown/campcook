@@ -31,6 +31,7 @@ Build a mobile app named campcook for fast, fresh campus canteen ordering, with 
 - Emergent-managed Google sign-in is live: web redirect + native auth-session flow, `POST /api/auth/session` exchange (one-time session_id guard, user upsert by email, 7-day sessions), `GET /api/auth/me` validation on startup, `google_managed_ready: true`.
 - Discreet "Kitchen staff? Caterer sign-in" link on the welcome screen → `/caterer/login` (works in Expo Go where there is no address bar).
 - Caterer sales export: CSV (share sheet on native, file download on web) and daily PDF report via expo-print + expo-sharing (native; web shows guidance).
+- Sales history: date navigator on the Sales tab (‹ › with "Back to today"), backend `?date=YYYY-MM-DD` filtering (validated) on `/caterer/sales` and `/caterer/orders`, exports use the selected date.
 - Testing agent pass: 14/14 pytest, all UI flows green.
 
 ## Prioritized backlog

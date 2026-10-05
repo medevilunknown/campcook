@@ -78,6 +78,15 @@ def test_offline_billing_persists_and_counts_in_sales(api):
     assert summary["by_payment_method"].get("upi", 0) >= 240
     assert summary["by_source"].get("offline", 0) >= 240
 
+    # History: explicit date param returns the same day, and orders filter by date
+    dated = api.get(f"{BASE_URL}/api/caterer/sales", headers=headers, params={"date": summary["date"]})
+    assert dated.status_code == 200
+    assert dated.json()["total_revenue"] == summary["total_revenue"]
+    dated_orders = api.get(f"{BASE_URL}/api/caterer/orders", headers=headers, params={"date": summary["date"]})
+    assert any(item["id"] == created["id"] for item in dated_orders.json())
+    empty_day = api.get(f"{BASE_URL}/api/caterer/sales", headers=headers, params={"date": "2020-01-01"})
+    assert empty_day.json()["total_revenue"] == 0
+
 
 def test_menu_management(api):
     headers = caterer_headers(api)

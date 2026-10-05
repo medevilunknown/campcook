@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,17 +19,24 @@ export default function SalesScreen() {
   const [sales, setSales] = useState<SalesSummary | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [dayOffset, setDayOffset] = useState(0);
+
+  const selectedDate = useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - dayOffset);
+    return date.toISOString().slice(0, 10);
+  }, [dayOffset]);
 
   const load = useCallback(async () => {
     if (!session) return;
     try {
-      const value = await request<SalesSummary>("/caterer/sales", {}, session.token);
+      const value = await request<SalesSummary>(`/caterer/sales?date=${selectedDate}`, {}, session.token);
       setSales(value);
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [session]);
+  }, [session, selectedDate]);
 
   useFocusEffect(
     useCallback(() => {
@@ -45,9 +52,9 @@ export default function SalesScreen() {
     setExporting(true);
     setExportMessage("");
     try {
-      const orders = (await request<KitchenOrder[]>("/caterer/orders", {}, session.token)).filter((order) => order.created_at.startsWith(sales.date));
+      const orders = await request<KitchenOrder[]>(`/caterer/orders?date=${sales.date}`, {}, session.token);
       if (!orders.length) {
-        setExportMessage("No orders to export for today yet.");
+        setExportMessage("No orders to export for this date.");
         return;
       }
       const error =
@@ -76,7 +83,23 @@ export default function SalesScreen() {
       <View>
         <Text style={styles.eyebrow}>FINANCE</Text>
         <Text style={styles.title}>Sales summary</Text>
-        <Text style={styles.subtitle}>{sales?.date ?? "Today"}</Text>
+      </View>
+
+      <View style={styles.dateNav}>
+        <Pressable testID="date-prev-button" onPress={() => setDayOffset((value) => value + 1)} style={({ pressed }) => [styles.dateNavButton, pressed && styles.pressed]} hitSlop={8}>
+          <Ionicons name="chevron-back" size={18} color={colors.brandPrimary} />
+        </Pressable>
+        <View style={styles.dateNavCenter}>
+          <Text testID="sales-date-label" style={styles.dateNavText}>{sales?.date ?? selectedDate}</Text>
+          {dayOffset > 0 && (
+            <Pressable testID="date-today-button" onPress={() => setDayOffset(0)} hitSlop={8}>
+              <Text style={styles.dateNavToday}>Back to today</Text>
+            </Pressable>
+          )}
+        </View>
+        <Pressable testID="date-next-button" onPress={() => setDayOffset((value) => Math.max(0, value - 1))} disabled={dayOffset === 0} style={({ pressed }) => [styles.dateNavButton, dayOffset === 0 && styles.dateNavDisabled, pressed && styles.pressed]} hitSlop={8}>
+          <Ionicons name="chevron-forward" size={18} color={dayOffset === 0 ? colors.muted : colors.brandPrimary} />
+        </Pressable>
       </View>
 
       {!!error && <Text testID="sales-error" style={styles.errorText}>{error}</Text>}
@@ -85,7 +108,7 @@ export default function SalesScreen() {
         <View>
           <Text style={styles.heroLabel}>TOTAL REVENUE</Text>
           <Text testID="sales-total" style={styles.heroValue}>₹{sales?.total_revenue ?? 0}</Text>
-          <Text style={styles.heroSub}>{sales?.order_count ?? 0} orders today</Text>
+          <Text style={styles.heroSub}>{sales?.order_count ?? 0} orders</Text>
         </View>
         <Ionicons name="trending-up-outline" size={44} color={colors.brandTertiary} />
       </LinearGradient>
@@ -97,7 +120,7 @@ export default function SalesScreen() {
 
       <Text style={styles.sectionTitle}>By payment method</Text>
       <View style={styles.card}>
-        {!payments.length && <Text style={styles.emptyCopy}>No sales recorded yet today.</Text>}
+        {!payments.length && <Text style={styles.emptyCopy}>No sales recorded for this date.</Text>}
         {payments.map(([method, amount]) => (
           <View key={method} testID={`sales-method-${method}`} style={styles.barRow}>
             <Text style={styles.barLabel}>{PAYMENT_LABEL[method] ?? method}</Text>
@@ -121,7 +144,7 @@ export default function SalesScreen() {
         ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Top dishes today</Text>
+      <Text style={styles.sectionTitle}>Top dishes</Text>
       <View style={styles.card}>
         {!sales?.top_items.length && <Text style={styles.emptyCopy}>No dishes sold yet.</Text>}
         {sales?.top_items.map((item, index) => (
@@ -168,6 +191,12 @@ const useStyles = makeStyles((colors) =>
     eyebrow: { color: colors.brandPrimary, fontSize: 11, fontWeight: "800", letterSpacing: 1.2 },
     title: { color: colors.onSurface, fontSize: 24, fontWeight: "800", marginTop: 4 },
     subtitle: { color: colors.muted, fontSize: 12, marginTop: 3 },
+    dateNav: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.surfaceSecondary, borderRadius: 14, padding: 8 },
+    dateNavButton: { width: 44, height: 44, borderRadius: 11, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
+    dateNavDisabled: { opacity: 0.5 },
+    dateNavCenter: { flex: 1, alignItems: "center", gap: 2 },
+    dateNavText: { color: colors.onSurface, fontSize: 15, fontWeight: "800" },
+    dateNavToday: { color: colors.brandPrimary, fontSize: 11, fontWeight: "800" },
     errorText: { color: colors.error, fontSize: 12 },
     heroCard: { borderRadius: 20, padding: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     heroLabel: { color: colors.brandTertiary, fontSize: 10, fontWeight: "900", letterSpacing: 1 },
