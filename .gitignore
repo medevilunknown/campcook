@@ -46,6 +46,13 @@ dump.rdb
 .DS_Store
 *.pem
 
+# Local environment and generated metadata
+.env
+.env.*
+**/.env
+**/.env.*
+.emergent/
+
 # Python
 __pycache__/
 *pyc*
